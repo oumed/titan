@@ -278,3 +278,7 @@ func (t *APITitan) DeleteLocation(location Location) error {
 	)
 	return nil
 }
+
+func (t *APITitan) GetName() string{
+	return "Hi Test" + t.Credential.ConsumerKey
+}
