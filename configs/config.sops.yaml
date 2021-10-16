@@ -1,0 +1,6 @@
+env: local
+log:
+    level: DEBUG
+    encoding: console
+    includeCaller: "true"
+    includeStacktrace: "true"
