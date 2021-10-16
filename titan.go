@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dghubble/oauth1"
-	"github.com/oumed/titan/internal/app/titan/log"
+	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
@@ -96,18 +96,17 @@ type LocationsResponse struct {
 }
 
 func (t *APITitan) GetCustomerAccounts() error {
-	l := log.L.With(zap.String("APITitan", "GetCustomerAccounts"))
 
 	if len(t.Accounts) != 0 {
 		return nil
 	}
 	endpointURL := fmt.Sprintf("%s/restapi/users", t.Credential.WebTitanBaseUrl)
 	client := OAuthClient(t.Credential)
-	l.Info("Retrieving WebTitan UserAccounts", zap.String("ENDPOINT_URL", endpointURL))
+	log.Info("Retrieving WebTitan UserAccounts", zap.String("ENDPOINT_URL", endpointURL))
 
 	response, err := client.Get(endpointURL)
 	if err != nil {
-		l.Error("Error get GetListUserAccounts", zap.Error(err))
+		log.Error("Error get GetListUserAccounts", zap.Error(err))
 		return err
 	}
 	//header := response.Request.Header.Get("authorization")
@@ -118,7 +117,7 @@ func (t *APITitan) GetCustomerAccounts() error {
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		l.Error("Error body", zap.Error(err))
+		log.Error("Error body", zap.Error(err))
 		return err
 	}
 
@@ -126,7 +125,7 @@ func (t *APITitan) GetCustomerAccounts() error {
 
 	err = json.Unmarshal(body, &usersResponse)
 	if err != nil {
-		l.Error("Error json.Unmarshal", zap.Error(err))
+		log.Error("Error json.Unmarshal", zap.Error(err))
 		return err
 	}
 
@@ -141,28 +140,27 @@ func (t *APITitan) GetCustomerAccounts() error {
 
 func (t *APITitan) GetLocationById(CustomerId int64) (LocationsResponse, error) {
 
-	l := log.L.With(zap.Any("APITitan", "GetLocationById"))
 	endpointURL := fmt.Sprintf("%s/restapi/users/%d/locations/dynamicip", t.Credential.WebTitanBaseUrl, CustomerId)
 	client := OAuthClient(t.Credential)
-	l.Info("Retrieving WebTitan Locations", zap.String("ENDPOINT_URL", endpointURL))
+	log.Info("Retrieving WebTitan Locations", zap.String("ENDPOINT_URL", endpointURL))
 
 	response, err := client.Get(endpointURL)
 	if err != nil {
-		l.Error("Error Retrieving WebTitan Locations", zap.Error(err))
+		log.Error("Error Retrieving WebTitan Locations", zap.Error(err))
 		return LocationsResponse{}, err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		l.Error("Error ioutil.ReadAll(response.Body)", zap.Error(err))
+		log.Error("Error ioutil.ReadAll(response.Body)", zap.Error(err))
 		return LocationsResponse{}, err
 	}
 
 	locationsRespone := LocationsResponse{}
 	err = json.Unmarshal(body, &locationsRespone)
 	if err != nil {
-		l.Error("Error json.Unmarshal", zap.Error(err))
+		log.Error("Error json.Unmarshal", zap.Error(err))
 		return LocationsResponse{} ,err
 	}
 	return locationsRespone, nil
@@ -170,10 +168,9 @@ func (t *APITitan) GetLocationById(CustomerId int64) (LocationsResponse, error) 
 
 func (t *APITitan) GetLocations() error {
 
-	l := log.L.With(zap.Any("APITitan", "GetLocations"))
 	err := t.GetCustomerAccounts()
 	if err != nil {
-		l.Error("Error get GetListUserAccounts", zap.Error(err))
+		log.Error("Error get GetListUserAccounts", zap.Error(err))
 		return err
 	}
 
@@ -183,7 +180,7 @@ func (t *APITitan) GetLocations() error {
 	for _, a := range t.Accounts {
 		locationsRespone, err := t.GetLocationById(a.ID)
 		if err != nil {
-			l.Error("Error json.Unmarshal", zap.Error(err))
+			log.Error("Error json.Unmarshal", zap.Error(err))
 			continue
 		}
 
@@ -203,10 +200,6 @@ func (t *APITitan) UpdateLocation(location Location) error {
 	v := url.Values{}
 	v.Set("ip", location.IP)
 	v.Set("name", location.Name)
-
-	l := log.L.With(zap.Int64("customerId", location.CustomerID),
-		zap.Int64("locationId", location.CustomerID),
-		zap.Any("Location", v))
 
 	var endpointURL string
 
@@ -240,7 +233,7 @@ func (t *APITitan) UpdateLocation(location Location) error {
 			endpointURL, location.Name, location.IP, response.Status, string(body))
 	}
 
-	l.Info("Updated location",
+	log.Info("Updated location",
 		zap.String("HTTP_STATUS", response.Status),
 		zap.String("HTTP_BODY", string(body)),
 	)
@@ -248,10 +241,6 @@ func (t *APITitan) UpdateLocation(location Location) error {
 }
 
 func (t *APITitan) DeleteLocation(location Location) error {
-
-	l := log.L.With(zap.Any("APITitan", "DeleteLocation"),
-		zap.Int64("locationId", location.CustomerID))
-
 	if location.CustomerID == 0 || location.ID == 0 || location.IP != "" {
 		return nil
 	}
@@ -283,7 +272,7 @@ func (t *APITitan) DeleteLocation(location Location) error {
 			location.CustomerID, location.ID, response.Status, string(body))
 	}
 
-	l.Info("Delete location",
+	log.Info("Delete location",
 		zap.String("HTTP_STATUS", response.Status),
 		zap.String("HTTP_BODY", string(body)),
 	)

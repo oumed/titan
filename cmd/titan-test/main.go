@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	t "github.com/oumed/titan"
-	"github.com/oumed/titan/internal/app/titan/log"
+	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	apiTitan := t.APITitan{Credential: credential}
 	err := apiTitan.GetLocations()
 	if err != nil {
-		log.L.Error("failed to Titan locations", zap.Error(err))
+		log.Error("failed to Titan locations", zap.Error(err))
 		return
 	}
 
